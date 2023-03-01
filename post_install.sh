@@ -2,10 +2,22 @@
 
 
 export ENDPOINT=http://localhost:9082/api/v3
+wallet=/root/keystore/godWallet.json
+scoreAddressFileName=scoreAddr.env
 
-echo "Run this after starting gochain-icon-image"
-echo "Starting after 10 seconds...."
-sleep 10 
+###################Helpers##############
+
+usage() {
+    echo "Usage: $0 []"
+    exit 1
+}
+
+if [ $# -eq 1 ]; then
+    CMD=$1
+else
+    usage
+fi
+
 
 function printDebugTrace() {
 	local txHash=$1
@@ -193,6 +205,7 @@ function deployBTPContract() {
     sleep 2
 	wait_for_it $txHash
 	scoreAddr=$(goloop rpc txresult --uri $ENDPOINT $txHash | jq -r .scoreAddress)
+	echo $scoreAddr > $scoreAddressFileName
 }
 
 function openBTPNetwork() {
@@ -254,8 +267,9 @@ function sendBTPMessage() {
 	    --param message=0x04b3d972e61b4e8bf796c00e84030d22414a94d1830be528586e921584daadf934f74bd4a93146e5c3d34dc3af0e6dbcfe842318e939f8cc467707d6f4295d57e5\
 	    --key_store $wallet \
 	    --key_password $password | jq -r .)
-	sleep 2
-	wait_for_it $txHash
+	# sleep 2
+	echo $txHash
+	# wait_for_it $txHash
 }
 
 function getPublicKey() {
@@ -266,16 +280,44 @@ function getPublicKey() {
 }
 
 
-wallet=/home/lilixac/keystore/godWallet.json
-registerPRep $wallet
-setStake $wallet
-setDelegation $wallet
-setBonderList $wallet
-setBond $wallet
-registerPublicKey $wallet 0x04b3d972e61b4e8bf796c00e84030d22414a94d1830be528586e921584daadf934f74bd4a93146e5c3d34dc3af0e6dbcfe842318e939f8cc467707d6f4295d57e5 # public key of godwallet
+function setupBTP(){
 
-deployBTPContract $wallet
-openBTPNetwork $wallet icon-archway $scoreAddr
+	echo "Run this after starting gochain-icon-image"
+	echo "Starting after 10 seconds...."
+	sleep 10 
 
-setNetworkId $wallet $scoreAddr
-sendBTPMessage $wallet $scoreAddr
+	registerPRep $wallet
+	setStake $wallet
+	setDelegation $wallet
+	setBonderList $wallet
+	setBond $wallet
+	registerPublicKey $wallet 0x04b3d972e61b4e8bf796c00e84030d22414a94d1830be528586e921584daadf934f74bd4a93146e5c3d34dc3af0e6dbcfe842318e939f8cc467707d6f4295d57e5 # public key of godwallet
+
+	deployBTPContract $wallet
+	openBTPNetwork $wallet icon-archway $scoreAddr
+	setNetworkId $wallet $scoreAddr
+}
+
+function testMessage(){
+	echo $wallet 
+	local scoreAddrFromF="$(cat $scoreAddressFileName)"
+	echo $scoreAddressFileName
+	echo $scoreAddrFromF
+	sendBTPMessage $wallet $scoreAddrFromF
+}
+
+
+##########Main switch case ###############
+
+case "$CMD" in
+  setup )
+    setupBTP 
+  ;;
+  sendBTPMessage )
+    testMessage
+  ;;
+  * )
+    echo "Error: unknown command: $CMD"
+    usage
+esac
+
