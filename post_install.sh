@@ -266,7 +266,7 @@ function getPublicKey() {
 }
 
 
-wallet=/home/lilixac/keystore/godWallet.json
+wallet=./data/godWallet.json
 registerPRep $wallet
 setStake $wallet
 setDelegation $wallet
