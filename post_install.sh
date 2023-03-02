@@ -2,7 +2,7 @@
 
 
 export ENDPOINT=http://localhost:9082/api/v3
-wallet=/root/keystore/godWallet.json
+wallet=./data/godWallet.json
 scoreAddressFileName=scoreAddr.env
 
 ###################Helpers##############
@@ -279,7 +279,6 @@ function getPublicKey() {
 	    --param address=$(cat $1| jq -r .address)
 }
 
-
 function setupBTP(){
 
 	echo "Run this after starting gochain-icon-image"
@@ -308,7 +307,6 @@ function testMessage(){
 
 
 ##########Main switch case ###############
-
 case "$CMD" in
   setup )
     setupBTP 
