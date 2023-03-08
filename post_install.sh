@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 
 export ENDPOINT=http://localhost:9082/api/v3
