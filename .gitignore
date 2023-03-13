@@ -2,3 +2,6 @@ chain/
 tracker/data/
 tracker/logs/
 tracker/score/
+
+
+scoreAddr.env
