@@ -30,7 +30,7 @@ function wait_for_it() {
 	
 	status=$(goloop rpc txresult --uri $ENDPOINT $txHash | jq -r .status)
 	if [ $status == "0x1" ]; then
-        echo "Successful"
+    	echo "Successful"
     else
     	echo $status
     	read -p "Print debug trace? [y/N]: " proceed
@@ -265,18 +265,23 @@ function sendBTPMessage() {
 	    --step_limit 1000000000\
 	    --to $toContract \
 	    --method sendBTPMessageWithBytes \
-	    --param message=0x04b3d972e61b4e8bf796c00e84030d22414a94d1830be528586e921584daadf934f74bd4a93146e5c3d34dc3af0e6dbcfe842318e939f8cc467707d6f4295d57e5\
+	    --param message=0xed00857863616c6c896368616e6e656c2d30857863616c6c896368616e6e656c2d3180c22e028705f6f8bb788b32\
 	    --key_store $wallet \
 	    --key_password $password | jq -r .)
 	echo $txHash
 
 	if [[ $skipTxResult == "skip" ]]; then
     		return 
-    	fi
+  fi
 
 
 	sleep 2
 	wait_for_it $txHash
+
+	read -p "Print transaction result? [y/N]: " proceed
+	if [[ $proceed == "y" ]]; then
+		goloop rpc txresult --uri $ENDPOINT $txHash
+	fi
 }
 
 function getPublicKey() {
@@ -320,7 +325,7 @@ function multipleMessages() {
 	sendBTPMessage $wallet $scoreAddrFromF skip
 	sendBTPMessage $wallet $scoreAddrFromF skip
 	sendBTPMessage $wallet $scoreAddrFromF skip
-    }
+ }
 
 
 
