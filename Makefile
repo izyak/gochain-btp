@@ -6,5 +6,8 @@ start:
 test-btp:
 	./post_install.sh sendBTPMessage
 
+multiple-txns:
+	./post_install.sh multipleBTPMessages
+
 stop:
 	./run_gochain.sh stop

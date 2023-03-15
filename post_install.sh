@@ -256,6 +256,7 @@ function sendBTPMessage() {
 
 	local wallet=$1
 	local toContract=$2
+	local skipTxResult=$3
 	local password=gochain
 	
 	local txHash=$(goloop rpc sendtx call \
@@ -267,9 +268,15 @@ function sendBTPMessage() {
 	    --param message=0x04b3d972e61b4e8bf796c00e84030d22414a94d1830be528586e921584daadf934f74bd4a93146e5c3d34dc3af0e6dbcfe842318e939f8cc467707d6f4295d57e5\
 	    --key_store $wallet \
 	    --key_password $password | jq -r .)
-	# sleep 2
 	echo $txHash
-	# wait_for_it $txHash
+
+	if [[ $skipTxResult == "skip" ]]; then
+    		return 
+    	fi
+
+
+	sleep 2
+	wait_for_it $txHash
 }
 
 function getPublicKey() {
@@ -305,6 +312,17 @@ function testMessage(){
 	sendBTPMessage $wallet $scoreAddrFromF
 }
 
+function multipleMessages() {
+	echo $wallet 
+	local scoreAddrFromF="$(cat $scoreAddressFileName)"
+
+	sendBTPMessage $wallet $scoreAddrFromF skip
+	sendBTPMessage $wallet $scoreAddrFromF skip
+	sendBTPMessage $wallet $scoreAddrFromF skip
+	sendBTPMessage $wallet $scoreAddrFromF skip
+    }
+
+
 
 ##########Main switch case ###############
 case "$CMD" in
@@ -313,6 +331,9 @@ case "$CMD" in
   ;;
   sendBTPMessage )
     testMessage
+  ;;
+  multipleBTPMessages )
+    multipleMessages
   ;;
   * )
     echo "Error: unknown command: $CMD"
