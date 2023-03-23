@@ -9,5 +9,20 @@ test-btp:
 multiple-txns:
 	./post_install.sh multipleBTPMessages
 
+deploy-ibc:
+	./post_install.sh deployIbcHandler
+
+deploy-client:
+	./post_install.sh deployMockClient
+
+ibc:
+	./post_install.sh ibcSetup
+
+update:
+	./update-contract.sh update
+
+move:
+	./update-contract.sh move
+
 stop:
 	./run_gochain.sh stop

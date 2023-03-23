@@ -231,7 +231,7 @@ function openBTPNetwork() {
 	wait_for_it $txHash
 }
 
-function setNetworkId() {
+function setNetworkIdBTP() {
 	echo "Setting Network Id"
 
 	local wallet=$1
@@ -264,15 +264,14 @@ function sendBTPMessage() {
 	    --nid 3 \
 	    --step_limit 1000000000\
 	    --to $toContract \
-	    --method sendBTPMessageWithBytes \
-	    --param message=0xed00857863616c6c896368616e6e656c2d30857863616c6c896368616e6e656c2d3180c22e028705f6f8bb788b32\
+	    --method sendPacket \
 	    --key_store $wallet \
 	    --key_password $password | jq -r .)
 	echo $txHash
 
 	if [[ $skipTxResult == "skip" ]]; then
     		return 
-  fi
+	fi
 
 
 	sleep 2
@@ -291,11 +290,99 @@ function getPublicKey() {
 	    --param address=$(cat $1| jq -r .address)
 }
 
+function sendICX() {
+	echo "Sending ICX---"
+
+	local wallet=$1
+	local to=$2
+	local value=$3
+	local skipTxResult=$4
+	local password=gochain
+	
+	local txHash=$(goloop rpc sendtx call \
+	    --uri $ENDPOINT  \
+	    --nid 3 \
+	    --step_limit 1000000000\
+	    --to $to \
+	    --value $3 \
+	    --key_store $wallet \
+	    --key_password $password | jq -r .)
+	echo $txHash
+
+	sleep 2
+	wait_for_it $txHash
+
+	read -p "Print transaction result? [y/N]: " proceed
+	if [[ $proceed == "y" ]]; then
+		goloop rpc txresult --uri $ENDPOINT $txHash
+	fi
+}
+
+	
+function deployIBCHandler() {
+	echo "Deploy DeployIBCHandler---"
+	local wallet=$1
+	local password=gochain
+
+	local txHash=$(goloop rpc sendtx deploy contracts/ibc-optimized.jar \
+			--content_type application/java \
+			--uri $ENDPOINT  \
+			--nid 3 \
+			--step_limit 100000000000\
+			--to cx0000000000000000000000000000000000000000 \
+			--key_store $wallet \
+			--key_password $password | jq -r .)
+	sleep 2
+	wait_for_it $txHash
+	scoreAddr=$(goloop rpc txresult --uri $ENDPOINT $txHash | jq -r .scoreAddress)
+	echo $scoreAddr > .ibchandlerAddr
+}
+
+function deployMockClient() {
+	echo "Deploy DeployMockClient---"
+	local wallet=$1
+	local password=gochain
+
+	local txHash=$(goloop rpc sendtx deploy contracts/client-optimized.jar \
+			--content_type application/java \
+			--uri $ENDPOINT  \
+			--nid 3 \
+			--step_limit 100000000000\
+			--to cx0000000000000000000000000000000000000000 \
+			--key_store $wallet \
+			--key_password $password | jq -r .)
+    sleep 2
+	wait_for_it $txHash
+	scoreAddr=$(goloop rpc txresult --uri $ENDPOINT $txHash | jq -r .scoreAddress)
+	echo $scoreAddr > .mockClient
+}
+
+function registerMockClient() {
+    echo "Register mock client---"
+    local wallet=$1
+    local password=gochain
+    local toContract=$2
+    local clientAddr=$3
+
+    local txHash=$(goloop rpc sendtx call \
+	    --uri $ENDPOINT  \
+	    --nid 3 \
+	    --step_limit 1000000000\
+	    --to $toContract\
+	    --method registerClient \
+	    --param clientType="07-tendermint" \
+	    --param client=$clientAddr \
+	    --key_store $wallet \
+	    --key_password $password | jq -r .)
+    sleep 2
+    wait_for_it $txHash
+}
+     
 function setupBTP(){
 
 	echo "Run this after starting gochain-icon-image"
-	echo "Starting after 10 seconds...."
-	sleep 10 
+	echo "Starting after 5 seconds...."
+	sleep 5
 
 	registerPRep $wallet
 	setStake $wallet
@@ -304,17 +391,36 @@ function setupBTP(){
 	setBond $wallet
 	registerPublicKey $wallet 0x04b3d972e61b4e8bf796c00e84030d22414a94d1830be528586e921584daadf934f74bd4a93146e5c3d34dc3af0e6dbcfe842318e939f8cc467707d6f4295d57e5 # public key of godwallet
 
+	## to get a BTP Block Height
 	deployBTPContract $wallet
-	openBTPNetwork $wallet icon-archway $scoreAddr
-	setNetworkId $wallet $scoreAddr
+	openBTPNetwork $wallet eth $scoreAddr
+	setNetworkIdBTP $wallet $scoreAddr
+	sendBTPMessage $wallet $scoreAddr
+}
+
+function setupForIBC() {
+    echo "Run this to start ibc configuration"
+    echo "Starting in 3 seconds..."
+    sleep 3
+
+    deployIBCHandler $wallet
+    echo "IBC Contract deployed at address:"
+    local ibcHandler=$(cat .ibchandlerAddr)
+    echo $ibcHandler
+	
+    
+    # openBTPNetwork $wallet eth $ibcHandler
+
+    deployMockClient $wallet
+    echo "Mock client deployed at address:"
+    local mockClient=$(cat .mockClient)
+    echo $mockClient    
+
+    registerMockClient $wallet $ibcHandler $mockClient
 }
 
 function testMessage(){
-	echo $wallet 
-	local scoreAddrFromF="$(cat $scoreAddressFileName)"
-	echo $scoreAddressFileName
-	echo $scoreAddrFromF
-	sendBTPMessage $wallet $scoreAddrFromF
+	sendBTPMessage $wallet $scoreAddr
 }
 
 function multipleMessages() {
@@ -339,6 +445,15 @@ case "$CMD" in
   ;;
   multipleBTPMessages )
     multipleMessages
+  ;;
+  deployIbcHandler )
+		deployIBCHandler $wallet
+  ;;
+  deployMockClient )
+		deployMockClient $wallet
+  ;;
+  ibcSetup )
+	setupForIBC
   ;;
   * )
     echo "Error: unknown command: $CMD"
