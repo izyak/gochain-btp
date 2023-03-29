@@ -416,6 +416,7 @@ function setupBTP(){
 	sendBTPMessage $wallet $scoreAddr
 }
 
+
 function setupForIBC() {
     echo "Run this to start ibc configuration"
     echo "Starting in 3 seconds..."
@@ -439,7 +440,7 @@ function setupForIBC() {
     echo $ibc
 	
     
-    # openBTPNetwork $wallet eth $ibcHandler
+    openBTPNetwork $wallet eth $ibcHandler
 
     deployMockClient $wallet $mock
     echo "Mock client deployed at address:"
@@ -450,7 +451,8 @@ function setupForIBC() {
 }
 
 function testMessage(){
-	sendBTPMessage $wallet $scoreAddressFilename
+	local scoreAddrFromF="$(cat $scoreAddressFilename)"
+	sendBTPMessage $wallet $scoreAddrFromF
 }
 
 function multipleMessages() {
