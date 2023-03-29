@@ -444,9 +444,9 @@ function setupForIBC() {
     deployMockClient $wallet $mock
     echo "Mock client deployed at address:"
     local mockClient=$(cat $mock)
-    echo $mock    
+    echo $mockClient   
 
-    registerMockClient $wallet $ibcHandler $mock
+    registerMockClient $wallet $ibcHandler $mockClient
 }
 
 function testMessage(){
