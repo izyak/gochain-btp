@@ -3,7 +3,15 @@
 
 export ENDPOINT=http://localhost:9082/api/v3
 wallet=./data/godWallet.json
-scoreAddressFileName=scoreAddr.env
+contractAddressFolder=./contract-filenames/
+scoreAddressFilename=$contractAddressFolder"scoreAddr.env"
+ibcAddressFilename=$contractAddressFolder"ibcAddr.env"
+mockClientFilename=$contractAddressFolder"client.env"
+
+#########Second contract Addrs
+ibcAddressFilename2=$contractAddressFolder"ibcAddr2.env"
+mockClientFilename2=$contractAddressFolder"client2.env"
+
 
 ###################Helpers##############
 
@@ -205,7 +213,7 @@ function deployBTPContract() {
     sleep 2
 	wait_for_it $txHash
 	scoreAddr=$(goloop rpc txresult --uri $ENDPOINT $txHash | jq -r .scoreAddress)
-	echo $scoreAddr > $scoreAddressFileName
+	echo $scoreAddr > $scoreAddressFilename
 }
 
 function openBTPNetwork() {
@@ -322,7 +330,12 @@ function sendICX() {
 function deployIBCHandler() {
 	echo "Deploy DeployIBCHandler---"
 	local wallet=$1
+	local filename=$2
 	local password=gochain
+
+	if [ -z "$filename" ]; then
+		filename=$ibcAddressFilename
+	fi
 
 	local txHash=$(goloop rpc sendtx deploy contracts/ibc-optimized.jar \
 			--content_type application/java \
@@ -335,13 +348,18 @@ function deployIBCHandler() {
 	sleep 2
 	wait_for_it $txHash
 	scoreAddr=$(goloop rpc txresult --uri $ENDPOINT $txHash | jq -r .scoreAddress)
-	echo $scoreAddr > .ibchandlerAddr
+	echo $scoreAddr > $filename
 }
 
 function deployMockClient() {
 	echo "Deploy DeployMockClient---"
 	local wallet=$1
 	local password=gochain
+	local filename=$2
+
+	if [ -z "$mockClientFilename" ]; then
+		filename=$mockClientFilename
+	fi
 
 	local txHash=$(goloop rpc sendtx deploy contracts/client-optimized.jar \
 			--content_type application/java \
@@ -354,7 +372,7 @@ function deployMockClient() {
     sleep 2
 	wait_for_it $txHash
 	scoreAddr=$(goloop rpc txresult --uri $ENDPOINT $txHash | jq -r .scoreAddress)
-	echo $scoreAddr > .mockClient
+	echo $scoreAddr > $filename
 }
 
 function registerMockClient() {
@@ -403,29 +421,41 @@ function setupForIBC() {
     echo "Starting in 3 seconds..."
     sleep 3
 
-    deployIBCHandler $wallet
+	local ibc=$1
+	local mock=$2
+
+	if [ -z "$ibc" ]; then 
+		ibc=$ibcAddressFilename
+	fi
+
+	if [ -z "$mock" ]; then
+		mock=$mockClientFilename
+	fi
+
+
+    deployIBCHandler $wallet $ibc
     echo "IBC Contract deployed at address:"
-    local ibcHandler=$(cat .ibchandlerAddr)
-    echo $ibcHandler
+    local ibcHandler=$(cat $ibc)
+    echo $ibc
 	
     
     # openBTPNetwork $wallet eth $ibcHandler
 
-    deployMockClient $wallet
+    deployMockClient $wallet $mock
     echo "Mock client deployed at address:"
-    local mockClient=$(cat .mockClient)
-    echo $mockClient    
+    local mockClient=$(cat $mock)
+    echo $mock    
 
-    registerMockClient $wallet $ibcHandler $mockClient
+    registerMockClient $wallet $ibcHandler $mock
 }
 
 function testMessage(){
-	sendBTPMessage $wallet $scoreAddr
+	sendBTPMessage $wallet $scoreAddressFilename
 }
 
 function multipleMessages() {
 	echo $wallet 
-	local scoreAddrFromF="$(cat $scoreAddressFileName)"
+	local scoreAddrFromF="$(cat $scoreAddressFilename)"
 
 	sendBTPMessage $wallet $scoreAddrFromF skip
 	sendBTPMessage $wallet $scoreAddrFromF skip
@@ -455,6 +485,10 @@ case "$CMD" in
   ibcSetup )
 	setupForIBC
   ;;
+  ibcSetup-second )
+	setupForIBC $ibcAddressFilename2 $mockClientFilename2
+  ;;
+
   * )
     echo "Error: unknown command: $CMD"
     usage

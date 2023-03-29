@@ -18,6 +18,9 @@ deploy-client:
 ibc:
 	./post_install.sh ibcSetup
 
+ibc-2:
+	./post_install.sh ibcSetup-second
+
 update:
 	./update-contract.sh update
 
