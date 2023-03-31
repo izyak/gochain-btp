@@ -39,7 +39,12 @@ This command does the following things in order:
 4. Prep configuration (make godwallet a prep and configure it)
 5. Open BTP Network
 6. Deploy a contract that can send BTP Message
-7. Send BTP Message using the network
+
+### Send a BTP Message
+Send BTP Message using the network using the following command:
+```sh
+make test-btp
+```
 
 ### Stop container
 To stop the container

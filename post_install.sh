@@ -221,8 +221,8 @@ function openBTPNetwork() {
 	    --nid 3 \
 	    --step_limit 1000000000\
 	    --to cx0000000000000000000000000000000000000001 \
-	    --method iAmKing \
-	    --param networkType=eth \
+	    --method openBTPNetwork \
+	    --param networkTypeName=eth \
 	    --param name=$name \
 	    --param owner=$owner \
 	    --key_store $wallet \
@@ -282,8 +282,8 @@ function getPublicKey() {
 function setupBTP(){
 
 	echo "Run this after starting gochain-icon-image"
-	echo "Starting after 10 seconds...."
-	sleep 10 
+	echo "Starting after 5 seconds...."
+	sleep 5 
 
 	registerPRep $wallet
 	setStake $wallet
