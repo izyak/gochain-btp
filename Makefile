@@ -1,7 +1,7 @@
 start:
-	sh pre_install.sh
-	sh run_gochain.sh start
-	sh post_install.sh setup
+	bash pre_install.sh
+	bash run_gochain.sh start
+	bash post_install.sh setup
 
 test-btp:
 	sh post_install.sh sendBTPMessage
