@@ -28,7 +28,7 @@ function wait_for_it() {
 	local txHash=$1
 	echo "Txn Hash: "$1
 	
-	status=$(goloop rpc txresult --uri $ENDPOINT $txHash | jq -r .status)
+	status=$(./goloop rpc txresult --uri $ENDPOINT $txHash | jq -r .status)
 	if [ $status == "0x1" ]; then
         echo "Successful"
     else
@@ -50,7 +50,7 @@ function registerPRep() {
 
 	echo "Registering" $prep "as prep"
 
-	local txHash=$(goloop rpc sendtx call \
+	local txHash=$(./goloop rpc sendtx call \
 	    --uri $ENDPOINT  \
 	    --nid 3 \
 	    --step_limit 1000000000\
@@ -73,7 +73,7 @@ function registerPRep() {
 
 function setRevision() {
 	echo "Set revision"
-	local txHash=$(goloop rpc sendtx call \
+	local txHash=$(./goloop rpc sendtx call \
 	    --uri $ENDPOINT  \
 	    --nid 3 \
 	    --step_limit 1000000000\
@@ -92,7 +92,7 @@ function setStake() {
 	local bond=0x2a5a058fc295ed000000
 	local wallet=$1
 	local password=gochain
-	local txHash=$(goloop rpc sendtx call \
+	local txHash=$(./goloop rpc sendtx call \
 	    --uri $ENDPOINT  \
 	    --nid 3 \
 	    --step_limit 1000000000\
@@ -113,7 +113,7 @@ function setDelegation() {
 	local prep=$(cat $wallet | jq -r .address)
     local param="{\"params\":{\"delegations\":[{\"address\":\"${prep}\",\"value\":\"0x152d02c7e14af6800000\"}]}}"
 
-	local txHash=$(goloop rpc sendtx call \
+	local txHash=$(./goloop rpc sendtx call \
 	    --uri $ENDPOINT  \
 	    --nid 3 \
 	    --step_limit 1000000000\
@@ -134,7 +134,7 @@ function setBonderList() {
 	local prep=$(cat $wallet | jq -r .address)
 	local param="{\"params\":{\"bonderList\":[\"${prep}\"]}}"
 
-	local txHash=$(goloop rpc sendtx call \
+	local txHash=$(./goloop rpc sendtx call \
 	    --uri $ENDPOINT  \
 	    --nid 3 \
 	    --step_limit 1000000000\
@@ -153,7 +153,7 @@ function setBond() {
 	local prep=$(cat $wallet | jq -r .address)
     local param="{\"params\":{\"bonds\":[{\"address\":\"${prep}\",\"value\":\"0x152d02c7e14af6800000\"}]}}"
 	local password=gochain
-	local txHash=$(goloop rpc sendtx call \
+	local txHash=$(./goloop rpc sendtx call \
 	    --uri $ENDPOINT  \
 	    --nid 3 \
 	    --step_limit 1000000000\
@@ -174,7 +174,7 @@ function registerPublicKey() {
 	local pubKey=$2
 	local password=gochain
 
-	local txHash=$(goloop rpc sendtx call \
+	local txHash=$(./goloop rpc sendtx call \
 	    --uri $ENDPOINT  \
 	    --nid 3 \
 	    --step_limit 1000000000\
@@ -193,7 +193,7 @@ function deployBTPContract() {
 	local wallet=$1
 	local password=gochain
 
-	local txHash=$(goloop rpc sendtx deploy btp-optimized.jar \
+	local txHash=$(./goloop rpc sendtx deploy btp-optimized.jar \
 		--content_type application/java \
 		--uri $ENDPOINT  \
 	    --nid 3 \
@@ -204,7 +204,7 @@ function deployBTPContract() {
 	    --key_password $password | jq -r .)
     sleep 2
 	wait_for_it $txHash
-	scoreAddr=$(goloop rpc txresult --uri $ENDPOINT $txHash | jq -r .scoreAddress)
+	scoreAddr=$(./goloop rpc txresult --uri $ENDPOINT $txHash | jq -r .scoreAddress)
 	echo $scoreAddr > $scoreAddressFileName
 }
 
@@ -216,7 +216,7 @@ function openBTPNetwork() {
 	local owner=$3
 	local password=gochain
 	
-	local txHash=$(goloop rpc sendtx call \
+	local txHash=$(./goloop rpc sendtx call \
 	    --uri $ENDPOINT  \
 	    --nid 3 \
 	    --step_limit 1000000000\
@@ -238,7 +238,7 @@ function setNetworkId() {
 	local toContract=$2
 	local password=gochain
 	
-	local txHash=$(goloop rpc sendtx call \
+	local txHash=$(./goloop rpc sendtx call \
 	    --uri $ENDPOINT  \
 	    --nid 3 \
 	    --step_limit 1000000000\
@@ -258,7 +258,7 @@ function sendBTPMessage() {
 	local toContract=$2
 	local password=gochain
 	
-	local txHash=$(goloop rpc sendtx call \
+	local txHash=$(./goloop rpc sendtx call \
 	    --uri $ENDPOINT  \
 	    --nid 3 \
 	    --step_limit 1000000000\
@@ -292,9 +292,9 @@ function setupBTP(){
 	setBond $wallet
 	registerPublicKey $wallet 0x04b3d972e61b4e8bf796c00e84030d22414a94d1830be528586e921584daadf934f74bd4a93146e5c3d34dc3af0e6dbcfe842318e939f8cc467707d6f4295d57e5 # public key of godwallet
 
-	deployBTPContract $wallet
-	openBTPNetwork $wallet icon-archway $scoreAddr
-	setNetworkId $wallet $scoreAddr
+	# deployBTPContract $wallet
+	# openBTPNetwork $wallet icon-archway $scoreAddr
+	# setNetworkId $wallet $scoreAddr
 }
 
 function testMessage(){
