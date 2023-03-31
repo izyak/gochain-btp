@@ -1,10 +1,12 @@
 start:
-	./pre_install.sh
-	./run_gochain.sh start
-	./post_install.sh setup
-
+	bash pre_install.sh
+	bash run_gochain.sh start
+	bash post_install.sh setup
+run:
+	bash pre_install.sh
+	bash run_gochain.sh start
 test-btp:
-	./post_install.sh sendBTPMessage
+	bash post_install.sh sendBTPMessage
 
 stop:
-	./run_gochain.sh stop
+	bash run_gochain.sh stop
