@@ -47,7 +47,7 @@ chains:
       chain-id: icon
       rpc-addr: http://localhost:9082/api/v3/
       timeout: 30s
-      keystore: /home/lilixac/keystore/godWallet.json
+      keystore: $HOME/keystore/godWallet.json
       password: gochain
       icon-network-id: 3
       btp-network-id: 3
@@ -60,7 +60,7 @@ chains:
       chain-id: iconx
       rpc-addr: http://localhost:9082/api/v3/
       timeout: 30s
-      keystore: /home/lilixac/keystore/godWallet.json
+      keystore: $HOME/keystore/godWallet.json
       password: gochain
       icon-network-id: 3
       btp-network-id: 2

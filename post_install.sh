@@ -241,7 +241,7 @@ function openBTPNetwork() {
 	    --step_limit 1000000000\
 	    --to cx0000000000000000000000000000000000000001 \
 	    --method openBTPNetwork \
-	    --param networkType=eth \
+	    --param networkTypeName=eth \
 	    --param name=$name \
 	    --param owner=$owner \
 	    --key_store $wallet \
