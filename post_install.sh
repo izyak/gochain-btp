@@ -3,17 +3,23 @@
 
 export ENDPOINT=http://localhost:9082/api/v3
 wallet=./data/godWallet.json
-contractAddressFolder=./contract-filenames/
-scoreAddressFilename=$contractAddressFolder"scoreAddr.env"
-ibcAddressFilename=$contractAddressFolder"ibcAddr.env"
-mockClientFilename=$contractAddressFolder"client.env"
+contractAddressFolder=./env/
+scoreAddressFilename=$contractAddressFolder".btpContract"
 
-#########Second contract Addrs
-ibcAddressFilename2=$contractAddressFolder"ibcAddr2.env"
-mockClientFilename2=$contractAddressFolder"client2.env"
+################################################################### 
 
+ibcAddressFilename=$contractAddressFolder".ibcHandler"
+mockClientFilename=$contractAddressFolder".mockClient"
+mockAppFilename=$contractAddressFolder".mockApp"
 
-###################Helpers##############
+################################################################### Second contract Addrs
+
+ibcAddressFilename2=$contractAddressFolder".ibcHandler2"
+mockClientFilename2=$contractAddressFolder".mockClient2"
+mockAppFilename2=$contractAddressFolder".mockApp2"
+
+###################################################################
+
 
 usage() {
     echo "Usage: $0 []"
@@ -21,6 +27,11 @@ usage() {
 }
 
 if [ $# -eq 1 ]; then
+	# create folder if not exists
+	if [ ! -d $contractAddressFolder ]; then
+		mkdir -p env
+	fi
+
     CMD=$1
 else
     usage
@@ -229,7 +240,7 @@ function openBTPNetwork() {
 	    --nid 3 \
 	    --step_limit 1000000000\
 	    --to cx0000000000000000000000000000000000000001 \
-	    --method iAmKing \
+	    --method openBTPNetwork \
 	    --param networkType=eth \
 	    --param name=$name \
 	    --param owner=$owner \
@@ -351,6 +362,28 @@ function deployIBCHandler() {
 	echo $scoreAddr > $filename
 }
 
+function deployMockApp() {
+	echo "Deploy MockApp---"
+	local wallet=$1
+	local password=gochain
+	local ibcHandler=$2
+	local filename=$3
+
+	local txHash=$(goloop rpc sendtx deploy contracts/mock-app-optimized.jar \
+			--content_type application/java \
+			--uri $ENDPOINT  \
+			--nid 3 \
+			--step_limit 100000000000\
+			--to cx0000000000000000000000000000000000000000 \
+			--param ibcHandler=$ibcHandler \
+			--key_store $wallet \
+			--key_password $password | jq -r .)
+        sleep 2
+	wait_for_it $txHash
+	scoreAddr=$(goloop rpc txresult --uri $ENDPOINT $txHash | jq -r .scoreAddress)
+	echo $scoreAddr > $filename
+}
+
 function deployMockClient() {
 	echo "Deploy DeployMockClient---"
 	local wallet=$1
@@ -395,6 +428,28 @@ function registerMockClient() {
     sleep 2
     wait_for_it $txHash
 }
+
+function bindPort() {
+    echo "Bind Mock app to a port---"
+    local wallet=$1
+    local password=gochain
+    local toContract=$2
+    local portId=$3
+    local mockAppAddr=$4
+
+    local txHash=$(goloop rpc sendtx call \
+	    --uri $ENDPOINT  \
+	    --nid 3 \
+	    --step_limit 1000000000\
+	    --to $toContract\
+	    --method bindPort \
+	    --param moduleAddress=$mockAppAddr \
+	    --param portId=$portId \
+	    --key_store $wallet \
+	    --key_password $password | jq -r .)
+    sleep 2
+    wait_for_it $txHash
+}
      
 function setupBTP(){
 
@@ -421,32 +476,43 @@ function setupForIBC() {
     echo "Starting in 3 seconds..."
     sleep 3
 
-	local ibc=$1
-	local mock=$2
+	local instance=$1
 
-	if [ -z "$ibc" ]; then 
-		ibc=$ibcAddressFilename
+	### filenames
+	local ibc=$ibcAddressFilename
+	local mClient=$mockClientFilename
+	local mApp=$mockAppFilename
+
+	if [[ $instance == 2 ]]; then 
+		ibc=$ibcAddressFilename2
+		mClient=$mockClientFilename2
+		mApp=$mockAppFilename2
 	fi
 
-	if [ -z "$mock" ]; then
-		mock=$mockClientFilename
-	fi
+	sleep 5
 
 
     deployIBCHandler $wallet $ibc
     echo "IBC Contract deployed at address:"
     local ibcHandler=$(cat $ibc)
-    echo $ibc
-	
+    echo $ibcHandler
     
-    # openBTPNetwork $wallet eth $ibcHandler
+    openBTPNetwork $wallet eth $ibcHandler
 
-    deployMockClient $wallet $mock
+    deployMockClient $wallet $mClient
     echo "Mock client deployed at address:"
-    local mockClient=$(cat $mock)
+    local mockClient=$(cat $mClient)
     echo $mockClient   
 
     registerMockClient $wallet $ibcHandler $mockClient
+
+    deployMockApp $wallet $ibcHandler $mApp
+    echo "Mock app deployed at address:"
+    local mockApp=$(cat $mApp)
+    echo $mockApp
+
+    local portId=mock
+    bindPort $wallet $ibcHandler $portId $mockApp
 }
 
 function testMessage(){
@@ -477,16 +543,16 @@ case "$CMD" in
     multipleMessages
   ;;
   deployIbcHandler )
-		deployIBCHandler $wallet
+	deployIBCHandler $wallet
   ;;
   deployMockClient )
-		deployMockClient $wallet
+	deployMockClient $wallet
   ;;
   ibcSetup )
 	setupForIBC
   ;;
   ibcSetup-second )
-	setupForIBC $ibcAddressFilename2 $mockClientFilename2
+	setupForIBC 2
   ;;
 
   * )

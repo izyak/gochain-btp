@@ -3,6 +3,11 @@ start:
 	./run_gochain.sh start
 	./post_install.sh setup
 
+ibc-all:
+	./post_install.sh ibcSetup
+	./post_install.sh ibcSetup-second
+	./update-config.sh
+
 test-btp:
 	./post_install.sh sendBTPMessage
 
@@ -21,11 +26,14 @@ ibc:
 ibc-2:
 	./post_install.sh ibcSetup-second
 
-update:
+updatec:
 	./update-contract.sh update
 
 move:
 	./update-contract.sh move
+
+update:
+	./update-config.sh
 
 stop:
 	./run_gochain.sh stop
