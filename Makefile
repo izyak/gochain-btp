@@ -29,6 +29,9 @@ ibc-2:
 updatec:
 	./update-contract.sh update
 
+update-mock:
+	./update-contract.sh update-mock
+
 move:
 	./update-contract.sh move
 

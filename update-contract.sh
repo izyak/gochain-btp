@@ -1,12 +1,15 @@
 #!/bin/bash
 
-export CONTRACTS=/home/lilixac/gochain-btp/contracts
-export HOME=/home/lilixac/ibriz/ibc/IBC-Integration/contracts/javascore
+export CONTRACTS=$HOME/my_work_bench/ibriz/btp-related/gochain-btp/contracts
+export CONTRACT_HOME=$HOME/my_work_bench/ibriz/ibc-related/IBC-Integration/contracts/javascore
+export WALLET=$HOME/keystore/godWallet.json
+contractAddressFolder=./env/
+
 CMD=$1
-BRANCH=IIBC-108-implement-tendermint-light-client
+BRANCH=main
 
 function moveIBC() {
-	cd $HOME
+	cd $CONTRACT_HOME
 
 	git checkout $BRANCH
 	./gradlew ibc:build -x test
@@ -20,7 +23,7 @@ function moveIBC() {
 
 
 function moveContracts() {
-	cd $HOME
+	cd $CONTRACT_HOME
 
 	# for light client
 	# git checkout feature/ICON-mock-lightclient
@@ -34,7 +37,7 @@ function moveContracts() {
 	mv mockclient-0.1.0-optimized.jar client-optimized.jar
 
 	# for ibc handler
-	cd $HOME
+	cd $CONTRACT_HOME
 	git checkout $BRANCH
 	./gradlew ibc:build -x test
 	./gradlew ibc:optimizedJar
@@ -48,18 +51,43 @@ function moveContracts() {
 function updateContract() {
 	echo "Update IBCHandler---"
 	export ENDPOINT=http://localhost:9082/api/v3
-	local wallet=/home/lilixac/gochain-btp/data/godWallet.json
 	local password=gochain
-	local ibcHandler=$(cat .ibchandlerAddr)
-	echo $ibcHandler
+	local contractAddress=$1
+	local contractFile=$2
+	echo $contractAddress
 
-	local txHash=$(goloop rpc sendtx deploy contracts/ibc-optimized.jar \
+
+	local txHash=$(goloop rpc sendtx deploy $contractFile \
 			--content_type application/java \
 			--uri $ENDPOINT  \
 			--nid 3 \
 			--step_limit 100000000000\
-			--to cx500fd12f06076b5248b854da94eae0b27c658132 \
-			--key_store $wallet \
+			--to  $contractAddress \
+			--key_store $WALLET \
+			--key_password $password | jq -r .)
+	sleep 2
+	txRes=$(goloop rpc txresult --uri $ENDPOINT $txHash)
+	echo $txRes
+}
+
+function updateContractMock() {
+	echo "Update IBCHandler---"
+	export ENDPOINT=http://localhost:9082/api/v3
+	local password=gochain
+	local contractAddress=$1
+	local contractFile=$2
+	local ibcHandlerAddress=$3
+	echo $contractAddress
+
+
+	local txHash=$(goloop rpc sendtx deploy $contractFile \
+			--content_type application/java \
+			--uri $ENDPOINT  \
+			--nid 3 \
+			--step_limit 100000000000\
+			--to  $contractAddress \
+			--param ibcHandler=$ibcHandlerAddress \
+			--key_store $WALLET \
 			--key_password $password | jq -r .)
 	sleep 2
 	txRes=$(goloop rpc txresult --uri $ENDPOINT $txHash)
@@ -67,7 +95,7 @@ function updateContract() {
 }
 
 function updateIBCHandler() {
-	cd $HOME
+	cd $CONTRACT_HOME
 	./gradlew ibc:build
 	./gradlew ibc:optimizedJar
 	cd ibc/build/libs
@@ -75,7 +103,32 @@ function updateIBCHandler() {
 	cd $CONTRACTS
 	mv ibc-0.1.0-optimized.jar ibc-optimized.jar
 	cd ..
-	updateContract
+
+	local ibcAddress1=$(cat $contractAddressFolder".ibcHandler")
+	local ibcAddress2=$(cat $contractAddressFolder".ibcHandler2")
+
+	updateContract $ibcAddress1 contracts/ibc-optimized.jar
+	updateContract $ibcAddress2 contracts/ibc-optimized.jar
+}
+
+function updateMockApp(){
+	local mockApp1=$(cat $contractAddressFolder".mockApp")
+	local mockApp2=$(cat $contractAddressFolder".mockApp2")
+	local ibcAddress1=$(cat $contractAddressFolder".ibcHandler")
+	local ibcAddress2=$(cat $contractAddressFolder".ibcHandler2")
+
+
+	cd $CONTRACT_HOME
+	./gradlew mockapp:build
+	./gradlew mockapp:optimizedJar
+	cd modules/mockapp/build/libs
+	mv mockapp-0.1.0-optimized.jar $CONTRACTS
+	cd $CONTRACTS
+	mv mockapp-0.1.0-optimized.jar mock-app-optimized.jar
+	cd ..
+
+	updateContractMock $mockApp1 contracts/mock-app-optimized.jar $ibcAddress1
+	updateContractMock $mockApp2 contracts/mock-app-optimized.jar $ibcAddress2
 }
 
 case "$CMD" in
@@ -88,6 +141,11 @@ case "$CMD" in
   update )
     updateIBCHandler
   ;;
+
+  update-mock )
+	updateMockApp
+  ;;
+	
   * )
     echo "Error: unknown command: $CMD"
 esac
