@@ -52,6 +52,7 @@ chains:
       icon-network-id: 3
       btp-network-id: 3
       start-btp-height: $h2
+      btp-network-type-id: 1
       ibc-handler-address: $ibcHandler2
   icon-1:
     type: icon
@@ -65,6 +66,7 @@ chains:
       icon-network-id: 3
       btp-network-id: 2
       start-btp-height: $h1
+      btp-network-type-id: 1
       ibc-handler-address: $ibcHandler1
 paths:
   icon-cosmoshub:

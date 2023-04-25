@@ -1,6 +1,6 @@
 services:
     node0:
-        image: goloop/gochain-icon:latest
+        image: public.ecr.aws/f5d2t1f5/goloop-gochain-icon:latest
         volumes:
             - ./data/multi:/goloop/data
             - ./data/governance:/goloop/data/gov
@@ -14,7 +14,7 @@ services:
         ports:
             - "9080:9080"
     node1:
-        image: goloop/gochain-icon:latest
+        image: public.ecr.aws/f5d2t1f5/goloop-gochain-icon:latest
         volumes:
             - ./data/multi:/goloop/data
             - ./data/governance:/goloop/data/gov

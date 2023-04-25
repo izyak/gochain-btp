@@ -6,7 +6,7 @@ export WALLET=$HOME/keystore/godWallet.json
 contractAddressFolder=./env/
 
 CMD=$1
-BRANCH=main
+BRANCH=fix/write-acknowledgement-follow-ibc-specs
 
 function moveIBC() {
 	cd $CONTRACT_HOME
@@ -110,6 +110,8 @@ function updateIBCHandler() {
 	updateContract $ibcAddress1 contracts/ibc-optimized.jar
 	updateContract $ibcAddress2 contracts/ibc-optimized.jar
 }
+
+
 
 function updateMockApp(){
 	local mockApp1=$(cat $contractAddressFolder".mockApp")
