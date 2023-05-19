@@ -285,16 +285,25 @@ function setupBTP(){
 	echo "Starting after 5 seconds...."
 	sleep 5 
 
+	configure
+
+	deployBTPContract $wallet
+	openBTPNetwork $wallet icon-archway $scoreAddr
+	setNetworkId $wallet $scoreAddr
+}
+
+function configure(){
+
+	echo "Run this after starting gochain-icon-image"
+	echo "Starting after 5 seconds...."
+	sleep 5 
+
 	registerPRep $wallet
 	setStake $wallet
 	setDelegation $wallet
 	setBonderList $wallet
 	setBond $wallet
 	registerPublicKey $wallet 0x04b3d972e61b4e8bf796c00e84030d22414a94d1830be528586e921584daadf934f74bd4a93146e5c3d34dc3af0e6dbcfe842318e939f8cc467707d6f4295d57e5 # public key of godwallet
-
-	deployBTPContract $wallet
-	openBTPNetwork $wallet icon-archway $scoreAddr
-	setNetworkId $wallet $scoreAddr
 }
 
 function testMessage(){
@@ -310,6 +319,9 @@ function testMessage(){
 case "$CMD" in
   setup )
     setupBTP 
+  ;;
+	cfg )
+    configure
   ;;
   sendBTPMessage )
     testMessage
