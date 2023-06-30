@@ -29,7 +29,7 @@ function wait_for_it() {
 	echo "Txn Hash: "$1
 	
 	status=$(goloop rpc txresult --uri $ENDPOINT $txHash | jq -r .status)
-	if [ $status == "0x1" ]; then
+	if [ $status=="0x1" ]; then
         echo "Successful"
     else
     	echo $status
