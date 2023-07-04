@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TARGET=${TARGET:-single}
+TARGET=${TARGET:-multi}
 
 usage() {
     echo "Usage: $0 [start|stop|pause|unpause|ps]"

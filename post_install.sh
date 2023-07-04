@@ -29,7 +29,7 @@ function wait_for_it() {
 	echo "Txn Hash: "$1
 	
 	status=$(goloop rpc txresult --uri $ENDPOINT $txHash | jq -r .status)
-	if [ $status == "0x1" ]; then
+	if [ $status=="0x1" ]; then
         echo "Successful"
     else
     	echo $status
@@ -287,9 +287,9 @@ function setupBTP(){
 
 	configure
 
-	deployBTPContract $wallet
-	openBTPNetwork $wallet icon-archway $scoreAddr
-	setNetworkId $wallet $scoreAddr
+	# deployBTPContract $wallet
+	# openBTPNetwork $wallet icon-archway $scoreAddr
+	# setNetworkId $wallet $scoreAddr
 }
 
 function configure(){
@@ -303,7 +303,38 @@ function configure(){
 	setDelegation $wallet
 	setBonderList $wallet
 	setBond $wallet
+	
 	registerPublicKey $wallet 0x04b3d972e61b4e8bf796c00e84030d22414a94d1830be528586e921584daadf934f74bd4a93146e5c3d34dc3af0e6dbcfe842318e939f8cc467707d6f4295d57e5 # public key of godwallet
+}
+
+
+
+function loadWallets() {
+
+
+	echo "Run this after starting gochain-icon-image"
+	echo "Starting after 5 seconds...."
+	sleep 10
+
+	local MULTI=$HOME/my_work_bench/ibriz/ibc-related/gochain-btp/data/multi
+
+    local keystores=$MULTI/k*.json
+
+    for prepKs in $keystores
+    do
+        registerPRep $prepKs
+        setStake $prepKs
+        setDelegation $prepKs
+        setBonderList $prepKs
+        setBond $prepKs
+        local pubKey=$(goloop ks pubkey -k $prepKs -p "gochain")
+        echo $pubKey
+        registerPublicKey $prepKs $pubKey 
+    done
+
+    deployBTPContract $prepKs
+    local scoreAddr="$(cat $scoreAddressFileName)"
+    openBTPNetwork $prepKs icon-archway $scoreAddr
 }
 
 function testMessage(){
@@ -320,8 +351,11 @@ case "$CMD" in
   setup )
     setupBTP 
   ;;
-	cfg )
+  cfg )
     configure
+  ;;
+  multi )
+	loadWallets
   ;;
   sendBTPMessage )
     testMessage
